@@ -13,11 +13,11 @@ Some tweaks, particularly with Group Policies, are only available in Windows 10 
 ## Usage
 Run the PowerShell script file `windows-10-enhance-privacy-and-control.ps1` with administrator privileges. This performs the default optimisation where changes are made that do not remove or disable features or functions.
 
-The PowerShell script can be run with following command line switches:
+The PowerShell script can be run with the following command line switches:
 
 ### Command line switches
 - `-EditGroupPolicies`: Edits the group policy (via the registry) in addition to toggling settings. This prevents the user from being able to toggle some settings through the UI. **Precaution should be taken when using this option in conjunction with higher optimisation levels.** _Some tweaks are only available by editing Group Policies while some settings are not controlled by any Group Policy._
-- `-AggressiveOptimization` By default, the standard optimisation only changes settings that should not impact any functionality. For example: turning off telemetry data collection, disabling advertising elements, and tightening privacy controls. Aggressive optimisation goes further by turning off privacy intrusive, yet unlikely to be useful, features.
+- `-AggressiveOptimization`: By default, the standard optimisation only changes settings that should not impact any functionality. For example: turning off telemetry data collection, disabling advertising elements, and tightening privacy controls. Aggressive optimisation goes further by turning off privacy intrusive, yet unlikely to be useful, features.
 
 ### Recommended usage
 This is the recommended usage of the PowerShell script on a freshly installed Windows 10. It performs aggressive optimisation but still allows the user to undo some of the settings changed by the optimisation. The changes in standard optimisation are generally safe and can be locked down by group policies.

@@ -1,6 +1,6 @@
 <#
 windows-10-enhance-privacy-and-control.ps1
-Version 20180804
+Version 20201228
 Written by Harry Wong (RedAndBlueEraser)
 #>
 
@@ -32,12 +32,17 @@ Param(
     [switch]$aggressiveOptimization,
 
     [bool]$windowsWelcomeExperience = $true,
+    [bool]$finishSettingUpDevice = $true,
     [bool]$tipsTricksSuggestions = $true,
     [bool]$timelineSuggestions = $true,
     [bool]$sharedDevices = $aggressiveOptimization.isPresent,
+    [bool]$clipboardHistory = $aggressiveOptimization.isPresent,
+    [bool]$clipboardSync = $aggressiveOptimization.isPresent,
+    [bool]$swiftPair = $true,
     [bool]$windowsInkWorkspaceRecommendedApps = $true,
     [bool]$phone = $aggressiveOptimization.isPresent,
     [bool]$wiFiSense = $true,
+    [bool]$hotspot20Networks = $true,
     [bool]$lockScreenBackground = $true,
     [bool]$lockScreenFunFactsTips = $true,
     [bool]$startSuggestions = $true,
@@ -60,7 +65,8 @@ Param(
     [bool]$appsGetHelp                      = $aggressiveOptimization.isPresent,
     [bool]$appsGetOffice                    = $true,
     [bool]$appsGrooveMusic                  = $false,
-    [bool]$appsMailandCalendar              = $false,
+    [bool]$appsHEIFImageExtensions          = $false,
+    [bool]$appsMailAndCalendar              = $false,
     [bool]$appsMaps                         = $false,
     [bool]$appsMessaging                    = $false,
     [bool]$appsMicrosoftEdge                = $false,
@@ -87,6 +93,7 @@ Param(
     [bool]$appsPrint3D                      = $false,
     [bool]$appsRoyalRevolt2                 = $aggressiveOptimization.isPresent,
     [bool]$appsScan                         = $false,
+    [bool]$appsSnipSketch                   = $false,
     [bool]$appsSkype                        = $aggressiveOptimization.isPresent,
     [bool]$appsSports                       = $aggressiveOptimization.isPresent,
     [bool]$appsStickyNotes                  = $false,
@@ -97,6 +104,7 @@ Param(
     [bool]$appsView3D                       = $aggressiveOptimization.isPresent,
     [bool]$appsWeather                      = $aggressiveOptimization.isPresent,
     [bool]$appsWebMediaExtensions           = $false,
+    [bool]$appsWebpImageExtensions          = $false,
     [bool]$appsWindowsPhone                 = $aggressiveOptimization.isPresent,
     [bool]$appsWindowsPhoneConnector        = $aggressiveOptimization.isPresent,
     [bool]$appsXbox                         = $aggressiveOptimization.isPresent,
@@ -109,7 +117,11 @@ Param(
     [bool]$useSignInInfoToFinishSetup = $aggressiveOptimization.isPresent,
     [bool]$syncSettings = $aggressiveOptimization.isPresent,
     [bool]$truePlay = $true,
+    [bool]$narratorGetImageTitlesLinks = $true,
     [bool]$narratorSendMoreDiagPerfData = $true,
+    [bool]$searchMicrosoftAccount = $true,
+    [bool]$searchWorkSchoolAccount = $true,
+    [bool]$searchHistory = $true,
     [bool]$advertisingId = $true,
     [bool]$locallyRelevantContent = $true,
     [bool]$trackAppLaunches = $true,
@@ -172,6 +184,11 @@ if ($windowsWelcomeExperience) {
     }
 }
 
+# Settings > System > Notifications & actions > Suggest ways I can finish setting up my device... => Off
+if ($finishSettingUpDevice) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\UserProfileEngagement" /v ScoobeSystemSettingEnabled /t REG_DWORD /d 0 /f
+}
+
 # Settings > System > Notifications & actions > Get tips, tricks, and suggestions... => Off
 if ($tipsTricksSuggestions) {
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SoftLandingEnabled /t REG_DWORD /d 0 /f
@@ -187,18 +204,47 @@ if ($timelineSuggestions) {
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" /v SubscribedContent-353698Enabled /t REG_DWORD /d 0 /f
 }
 
+# Settings > System > Shared experiences > Share content with a nearby device by using Bluetooth and Wi-Fi => Off
+# Settings > System > Shared experiences > I can share or receive content from => My devices only
 # Settings > System > Shared experiences > Let apps on other devices (including linked phones and tablets) open and message... => Off
 # Settings > System > Shared experiences > I can share or receive from => My devices only
 if ($sharedDevices) {
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SmartGlass" /v UserAuthPolicy /t REG_DWORD /d 0 /f
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v CdpSessionUserAuthzPolicy /t REG_DWORD /d 1 /f
-    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v NearShareChannelUserAuthzPolicy /t REG_DWORD /d 1 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v NearShareChannelUserAuthzPolicy /t REG_DWORD /d 0 /f
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP" /v RomeSdkChannelUserAuthzPolicy /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP\SettingsPage" /v BluetoothLastDisabledNearShare /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP\SettingsPage" /v NearShareChannelUserAuthzPolicy /t REG_DWORD /d 1 /f
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\CDP\SettingsPage" /v RomeSdkChannelUserAuthzPolicy /t REG_DWORD /d 1 /f
     # Group Policy > Computer Configuration\Administrative Templates\System\Group Policy\Continue experiences on this device => Disabled
     if ($editGroupPolicies) {
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableCdp /t REG_DWORD /d 0 /f
     }
+}
+
+# Settings > System > Clipboard > Save multiple items to the clipboard to use later... => Off
+if ($clipboardHistory) {
+    reg add "HKCU\SOFTWARE\Microsoft\Clipboard" /v EnableClipboardHistory /t REG_DWORD /d 0 /f
+    # Group Policy > Computer Configuration\Administrative Templates\System\OS Policies\Allow Clipboard History => Disabled
+    if ($editGroupPolicies) {
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v AllowClipboardHistory /t REG_DWORD /d 0 /f
+    }
+}
+
+# Settings > System > Clipboard > Paste text on your other devices... => Off
+# Settings > System > Clipboard > Automatic syncing => Never automatically sync text that I copy
+if ($clipboardSync) {
+    reg add "HKCU\SOFTWARE\Microsoft\Clipboard" /v EnableCloudClipboard /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Clipboard" /v CloudClipboardAutomaticUpload /t REG_DWORD /d 0 /f
+    # Group Policy > Computer Configuration\Administrative Templates\System\OS Policies\Allow Clipboard History => Disabled
+    if ($editGroupPolicies) {
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v AllowCrossDeviceClipboard /t REG_DWORD /d 0 /f
+    }
+}
+
+# Settings > Devices > Bluetooth & other devices > Show notifications to connect using Swift Pair => Off
+if ($swiftPair) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Bluetooth" /v QuickPair /t REG_DWORD /d 0 /f
 }
 
 # Settings > Devices > Pen & Windows Ink > Show recommended app suggestions => Off
@@ -211,11 +257,9 @@ if ($windowsInkWorkspaceRecommendedApps) {
 }
 
 # Settings > Phone => Disable
-if ($phone) {
-    # Group Policy > Computer Configuration\Administrative Templates\System\Group Policy\Phone-PC linking on this device => Disabled
-    if ($editGroupPolicies) {
-        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableMmx /t REG_DWORD /d 0 /f
-    }
+# Group Policy > Computer Configuration\Administrative Templates\System\Group Policy\Phone-PC linking on this device => Disabled
+if ($phone -and $editGroupPolicies) {
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableMmx /t REG_DWORD /d 0 /f
 }
 
 # Settings > Network & Internet > Wi-Fi > Find paid plans for suggested open hotspots near me => Off
@@ -226,6 +270,11 @@ if ($wiFiSense -and $editGroupPolicies) {
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowAutoConnectToWiFiSenseHotspots" /v value /t REG_DWORD /d 0 /f
     reg add "HKLM\SOFTWARE\Microsoft\PolicyManager\default\WiFi\AllowWiFiHotSpotReporting" /v value /t REG_DWORD /d 0 /f
     reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v AutoConnectAllowedOEM /t REG_DWORD /d 0 /f
+}
+
+# Settings > Network & Internet > Wi-Fi > Let me use Online Sign-Up to get connected => Off
+if ($hotspot20Networks) {
+    reg add "HKLM\SOFTWARE\Microsoft\WlanSvc\AnqpCache" /v OsuRegistrationStatus /t REG_DWORD /d 0 /f
 }
 
 # Settings > Personalization > Lock screen > Background => Picture
@@ -353,8 +402,13 @@ if ($appsGrooveMusic) {
     $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.ZuneMusic*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
     Get-AppxPackage *Microsoft.ZuneMusic* | Remove-AppxPackage
 }
+#   HEIF Image Extensions => Uninstall
+if ($appsHEIFImageExtensions) {
+    $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.HEIFImageExtension*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
+    Get-AppxPackage *Microsoft.HEIFImageExtension* | Remove-AppxPackage
+}
 #   Mail and Calendar => Uninstall
-if ($appsMailandCalendar) {
+if ($appsMailAndCalendar) {
     $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*microsoft.windowscommunicationsapps*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
     Get-AppxPackage *microsoft.windowscommunicationsapps* | Remove-AppxPackage
 }
@@ -492,6 +546,11 @@ if ($appsScan) {
     Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*WindowsScan*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
     Get-AppxPackage *WindowsScan* | Remove-AppxPackage
 }
+#   Snip & Sketch => Uninstall
+if ($appsSnipSketch) {
+    Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Microsoft.ScreenSketch*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
+    Get-AppxPackage *Microsoft.ScreenSketch* | Remove-AppxPackage
+}
 #   Skype => Uninstall
 if ($appsSkype) {
     Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Microsoft.SkypeApp*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
@@ -539,8 +598,13 @@ if ($appsWeather) {
 }
 #   Web Media Extensions => Uninstall
 if ($appsWebMediaExtensions) {
-    Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Microsoft.WindowsPhone*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
-    Get-AppxPackage *Microsoft.WindowsPhone* | Remove-AppxPackage
+    Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Microsoft.WebMediaExtensions*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
+    Get-AppxPackage *Microsoft.WebMediaExtensions* | Remove-AppxPackage
+}
+#   Webp Image Extensions => Uninstall
+if ($appsWebpImageExtensions) {
+    Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -Like "*Microsoft.WebpImageExtension*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName}
+    Get-AppxPackage *Microsoft.WebpImageExtension* | Remove-AppxPackage
 }
 #   Windows Phone => Uninstall
 if ($appsWindowsPhone) {
@@ -603,11 +667,49 @@ if ($useSignInInfoToFinishSetup) {
 }
 
 # Settings > Accounts > Sync your settings > Sync settings => Off
+# Settings > Accounts > Sync your settings > Theme => Off
+# Settings > Accounts > Sync your settings > Passwords => Off
+# Settings > Accounts > Sync your settings > Language preferences => Off
+# Settings > Accounts > Sync your settings > Other Windows settings => Off
 if ($syncSettings) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Accessibility" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\AppSync" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\BrowserSettings" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Credentials" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\DesktopTheme" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Language" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\PackageState" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Personalization" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\StartLayout" /v Enabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SettingSync\Groups\Windows" /v Enabled /t REG_DWORD /d 0 /f
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync app settings => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync Apps => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync browser settings => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync desktop personalization => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync other Windows settings => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync passwords => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync personalize => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Sync your settings\Do not sync start settings => Enabled
     if ($editGroupPolicies) {
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableSettingSync /t REG_DWORD /d 2 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableApplicationSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableApplicationSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableAppSyncSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableAppSyncSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableWebBrowserSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableWebBrowserSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableDesktopThemeSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableDesktopThemeSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableWindowsSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableWindowsSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableCredentialsSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableCredentialsSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisablePersonalizationSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisablePersonalizationSettingSyncUserOverride /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableStartLayoutSettingSync /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\SettingSync" /v DisableStartLayoutSettingSyncUserOverride /t REG_DWORD /d 1 /f
     }
 }
 
@@ -616,9 +718,38 @@ if ($truePlay) {
     reg add "HKCU\Software\Microsoft\Games" /v EnableXBGM /t REG_DWORD /d 0 /f
 }
 
+# Settings > Ease of Access > Narrator > Get image descriptions, page titles, and popular links => Off
+if ($narratorGetImageTitlesLinks) {
+    reg add "HKCU\SOFTWARE\Microsoft\Narrator\NoRoam" /v OnlineServicesEnabled /t REG_DWORD /d 0 /f
+}
+
 # Settings > Ease of Access > Narrator > Send additional diagnostic and performance data... => Off
+# Settings > Ease of Access > Narrator > Help make Narrator better => Off
 if ($narratorSendMoreDiagPerfData) {
     reg add "HKCU\SOFTWARE\Microsoft\Narrator\NoRoam" /v DetailedFeedback /t REG_DWORD /d 0 /f
+}
+
+# Settings > Search > Permissions & History > Allow Windows Search to provide results from your Microsoft account. => Off
+if ($searchMicrosoftAccount) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings" /v IsMSACloudSearchEnabled /t REG_DWORD /d 0 /f
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Search\Allow Cloud Search => Disable Cloud Search
+    if ($editGroupPolicies) {
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v AllowCloudSearch /t REG_DWORD /d 0 /f
+    }
+}
+
+# Settings > Search > Permissions & History > Allow Windows Search to provide results from your work or school account. => Off
+if ($searchWorkSchoolAccount) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings" /v IsAADCloudSearchEnabled /t REG_DWORD /d 0 /f
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Search\Allow Cloud Search => Disable Cloud Search
+    if ($editGroupPolicies) {
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Search" /v AllowCloudSearch /t REG_DWORD /d 0 /f
+    }
+}
+
+# Settings > Search > Permissions & History > To improve your search suggestions, let Windows Search store your search history... => Off
+if ($searchHistory) {
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\SearchSettings" /v IsDeviceSearchHistoryEnabled /t REG_DWORD /d 0 /f
 }
 
 # Settings > Privacy > General > Let apps use my advertising ID... => Off
@@ -939,11 +1070,12 @@ if ($diagnosticsApps) {
 # Settings > Update & Security > Windows Update > Advanced options > Choose the branch readiness level... => Semi-Annual Channel
 if ($windowsUpdateBranchReadinessLevel) {
     reg add "HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /v InsiderProgramEnabled /t REG_DWORD /d 0 /f
-    reg add "HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /v BranchReadinessLevel /t REG_DWORD /d 32 /f
+    reg add "HKLM\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" /v BranchReadinessLevel /t REG_DWORD /d 16 /f
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Update\Windows Update for Business\Select when Preview Builds and Feature Updates are received => Semi-Annual Channel
     if ($editGroupPolicies) {
-        reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate" /v BranchReadinessLevel /t REG_DWORD /d 32 /f
+        reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate" /v BranchReadinessLevel /t REG_DWORD /d 16 /f
         reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate" /v DeferFeatureUpdates /t REG_DWORD /d 1 /f
+        reg add "HKLM\Software\Policies\Microsoft\Windows\WindowsUpdate" /v DeferFeatureUpdatesPeriodinDays /t REG_DWORD /d 90 /f
     }
 }
 
@@ -1264,6 +1396,9 @@ if ($editGroupPolicies) {
 
     #   Allow device name to be sent in Windows diagnostic data => Disabled
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v AllowDeviceNameInTelemetry /t REG_DWORD /d 0 /f
+
+    #   Configure telemetry opt-in change notifications.
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v DisableTelemetryOptInChangeNotification /t REG_DWORD /d 1 /f
 
     #   Configure telemetry opt-in setting user interface. => Disable telemetry opt-in Settings
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\DataCollection" /v DisableTelemetryOptInSettingsUx /t REG_DWORD /d 1 /f

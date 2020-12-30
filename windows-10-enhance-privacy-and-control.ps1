@@ -1,6 +1,6 @@
 <#
 windows-10-enhance-privacy-and-control.ps1
-Version 20201228
+Version 20201229
 Written by Harry Wong (RedAndBlueEraser)
 #>
 
@@ -236,7 +236,7 @@ if ($clipboardHistory) {
 if ($clipboardSync) {
     reg add "HKCU\SOFTWARE\Microsoft\Clipboard" /v EnableCloudClipboard /t REG_DWORD /d 0 /f
     reg add "HKCU\SOFTWARE\Microsoft\Clipboard" /v CloudClipboardAutomaticUpload /t REG_DWORD /d 0 /f
-    # Group Policy > Computer Configuration\Administrative Templates\System\OS Policies\Allow Clipboard History => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\System\OS Policies\Allow Clipboard synchronization across devices => Disabled
     if ($editGroupPolicies) {
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v AllowCrossDeviceClipboard /t REG_DWORD /d 0 /f
     }
@@ -790,6 +790,7 @@ if ($turnOffSpeechAndTypingSuggestions) {
     reg add "HKCU\SOFTWARE\Microsoft\InputPersonalization\TrainedDataStore" /v HarvestContacts /t REG_DWORD /d 0 /f
     reg add "HKCU\SOFTWARE\Microsoft\Personalization\Settings" /v AcceptedPrivacyPolicy /t REG_DWORD /d 0 /f
     # Group Policy > Computer Configuration\Administrative Templates\Control Panel\Regional and Language Options\Allow input personalization => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Control Panel\Regional and Language Options\Allow users to enable online speech recognition services => Disabled
     if ($editGroupPolicies) {
         reg add "HKLM\SOFTWARE\Policies\Microsoft\InputPersonalization" /v AllowInputPersonalization /t REG_DWORD /d 0 /f
     }
@@ -1053,8 +1054,10 @@ if ($otherDevicesApps) {
 if ($backgroundApps) {
     reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\BackgroundAccessApplications" /v GlobalUserDisabled /t REG_DWORD /d 1 /f
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\App Privacy\Let Windows apps run in the background => Force Deny
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\App Privacy\Let Windows apps access user movements while running in the background => Force Deny
     if ($editGroupPolicies) {
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v LetAppsRunInBackground /t REG_DWORD /d 2 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v LetAppsAccessBackgroundSpatialPerception /t REG_DWORD /d 2 /f
     }
 }
 
@@ -1092,11 +1095,17 @@ if ($allowDownloadsFromOtherPCs) {
 # Settings > Update & Security > Windows Security > Open Windows Defender Security Center > Settings > Virus & threat protection settings > Cloud-delivered protection => Off
 if ($cloudDeliveredProtection) {
     Set-MpPreference -MAPSReporting Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Defender Antivirus\MAPS\Configure the 'Block at First Sight' feature => Disabled
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Defender Antivirus\MAPS\Configure local setting override for reporting to Microsoft Active Protection Service (MAPS) => Disabled
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Defender Antivirus\MAPS\Join Microsoft MAPS => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Defender Antivirus\Security Intelligence Updates\Allow real-time security intelligence updates based on reports to Microsoft MAPS => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Windows Defender Antivirus\Security Intelligence Updates\Allow notifications to disable security intelligence based reports to Microsoft MAPS => Disabled
     if ($editGroupPolicies) {
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v DisableBlockAtFirstSeen /t REG_DWORD /d 1 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v LocalSettingOverrideSpynetReporting /t REG_DWORD /d 0 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Spynet" /v SpyNetReporting /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates" /v RealTimeSignatureDelivery /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Signature Updates" /v SignatureDisableNotification /t REG_DWORD /d 0 /f
     }
 }
 
@@ -1162,6 +1171,8 @@ if ($edgeDoNotTrack) {
     if ($editGroupPolicies) {
         reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
     }
 }
 
@@ -1348,6 +1359,22 @@ if ($editGroupPolicies) {
     reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary" /v EnableExtendedBooksTelemetry /t REG_DWORD /d 0 /f
     reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v PreventLiveTileDataCollection /t REG_DWORD /d 1 /f
     reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v PreventLiveTileDataCollection /t REG_DWORD /d 1 /f
+    reg add "HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v MicrosoftEdgeDataOptIn /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\DataCollection" /v MicrosoftEdgeDataOptIn /t REG_DWORD /d 0 /f
+    #    Allow Microsoft Edge to start and load the Start and New Tab page at Windows startup and each time Microsoft Edge is closed => Prevent tab preloading
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\TabPreloader" /v AllowTabPreloading /t REG_DWORD /d 0 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\TabPreloader" /v AllowTabPreloading /t REG_DWORD /d 0 /f }
+    #    Allow Microsoft Edge to pre-launch at Windows startup, when the system is idle, and each time Microsoft Edge is closed => Prevent pre-launching
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AllowPrelaunch /t REG_DWORD /d 0 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AllowPrelaunch /t REG_DWORD /d 0 /f }
+
+    #   Windows Media Player related
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventLibrarySharing /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventCDDVDMetadataRetrieval /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventMusicFileMetadataRetrieval /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventRadioPresetsRetrieval /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventCodecDownload /t REG_DWORD /d 1 /f }
+    
 
     #   Allow Message Service Cloud Sync => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Messaging" /v AllowMessageSync /t REG_DWORD /d 0 /f }
@@ -1371,9 +1398,6 @@ if ($editGroupPolicies) {
 
     #   Microsoft Support Diagnostic Tool: Turn on MSDT interactive communication with support provider => Disabled
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\ScriptedDiagnosticsProvider\Policy" /v DisableQueryRemoteServer /t REG_DWORD /d 0 /f
-
-    #   Prevent Media Sharing => Enabled
-    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventLibrarySharing /t REG_DWORD /d 1 /f }
 
     #   Turn off feature advertisement balloon notifications => Enabled
     reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\Explorer" /v NoBalloonFeatureAdvertisements /t REG_DWORD /d 1 /f
@@ -1408,6 +1432,11 @@ if ($editGroupPolicies) {
 
     #   Turn on Live Sticker => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\InputMethod\Settings\CHS" /v EnableLiveSticker /t REG_DWORD /d 0 /f }
+
+    #   Let Windows apps activate with voice
+
+    #   Let Windows apps activate with voice while the system is locked
+    
 }
 
 # Services

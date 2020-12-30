@@ -163,7 +163,7 @@ Param(
     [bool]$cloudDeliveredProtection = $aggressiveOptimization.isPresent,
     [bool]$automaticSampleSubmission = $true,
     [bool]$findMyDevice = $aggressiveOptimization.isPresent,
-    [bool]$windowsInsiderProgram = $false,
+    [bool]$windowsInsiderProgram = $aggressiveOptimization.isPresent,
     [bool]$ieDoNotTrack = $true,
     [bool]$ieSuggestedSites = $true,
     [bool]$edgeNewTabs = $true,
@@ -1238,6 +1238,24 @@ if ($editGroupPolicies) {
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Internet Explorer\Allow Microsoft services to provide enhanced suggestions as the user types in the Address Bar => Disabled
     reg add "HKCU\SOFTWARE\Policies\Microsoft\Internet Explorer" /v AllowServicePoweredQSA /t REG_DWORD /d 0 /f
     reg add "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer" /v AllowServicePoweredQSA /t REG_DWORD /d 0 /f
+    #     Turn off browser geolocation => Enabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\Internet Explorer\Turn off browser geolocation => Enabled
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Internet Explorer\Turn off browser geolocation => Enabled
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\Internet Explorer\Geolocation" /v PolicyDisableGeolocation /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Geolocation" /v PolicyDisableGeolocation /t REG_DWORD /d 1 /f }
+    #     Turn off the flip ahead with page prediction feature => Enabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\Internet Explorer\Internet Control Panel\Advanced Page\Turn off the flip ahead with page prediction feature => Enabled
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Internet Explorer\Internet Control Panel\Advanced Page\Turn off the flip ahead with page prediction feature => Enabled
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\Internet Explorer\FlipAhead" /v Enabled /t REG_DWORD /d 0 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\FlipAhead" /v Enabled /t REG_DWORD /d 0 /f }
+    #     Turn off background synchronization for feeds and Web Slices => Enabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\RSS Feeds\Turn off background synchronization for feeds and Web Slices => Enabled
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\RSS Feeds\Turn off background synchronization for feeds and Web Slices => Enabled
+    if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds" /v BackgroundSyncStatus /t REG_DWORD /d 0 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds" /v BackgroundSyncStatus /t REG_DWORD /d 0 /f }
+    #     Allow Online Tips => Disabled
+    #       Group Policy > Computer Configuration\Administrative Templates\Control Panel\Allow Online Tips => Disabled
+    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v AllowOnlineTips /t REG_DWORD /d 0 /f
 
     #   Live Tiles
     #     Turn Off notifications network usage => Enabled
@@ -1247,17 +1265,25 @@ if ($editGroupPolicies) {
     #   Microsoft Account
     #     Accounts: Block Microsoft Accounts => Users can't add Microsoft accounts
     #       Group Policy > Computer Configuration\Windows Settings\Security Settings\Local Policies\Security Options\Accounts: Block Microsoft Accounts => Users can't add Microsoft accounts
-    # reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v NoConnectedUser /t REG_DWORD /d 3 /f
-    # reg add "HKLM\SYSTEM\CurrentControlSet\Services\wlidsvc" /v Start /t REG_DWORD /d 4 /f
+    if ($false) { reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v NoConnectedUser /t REG_DWORD /d 3 /f }
+    if ($false) { reg add "HKLM\SYSTEM\CurrentControlSet\Services\wlidsvc" /v Start /t REG_DWORD /d 4 /f }
 
     #   Microsoft Edge
     #     Allow Address bar drop-down list suggestions => Disabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow Address bar drop-down list suggestions => Disabled
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow Address bar drop-down list suggestions => Disabled
-    # reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\ServiceUI" /v ShowOneBox /t REG_DWORD /d 0 /f
+    if ($false) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\ServiceUI" /v ShowOneBox /t REG_DWORD /d 0 /f }
+    if ($false) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\ServiceUI" /v ShowOneBox /t REG_DWORD /d 0 /f }
     #     Allow configuration updates for the Books Library => Disabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow configuration updates for the Books Library => Disabled
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow configuration updates for the Books Library => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary" /v AllowConfigurationUpdateForBooksLibrary /t REG_DWORD /d 0 /f }
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary" /v AllowConfigurationUpdateForBooksLibrary /t REG_DWORD /d 0 /f }
+    #     Allow web content on New Tab page => Disabled
+    #       Group Policy > User Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow web content on New Tab page => Disabled
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\Microsoft Edge\Allow web content on New Tab page => Disabled
+    if ($false) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\ServiceUI" /v AllowWebContentOnNewTabPage /t REG_DWORD /d 0 /f }
+    if ($false) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\ServiceUI" /v AllowWebContentOnNewTabPage /t REG_DWORD /d 0 /f }
 
     #   Offline maps
     #     Turn off unsolicited network traffic on the Offline Maps settings page => Enabled
@@ -1267,7 +1293,7 @@ if ($editGroupPolicies) {
     #   OneDrive
     #     Prevent the usage of OneDrive for file storage => Enabled
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\OneDrive\Prevent the usage of OneDrive for file storage => Enabled
-    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v DisableFileSyncNGsc.exe /t REG_DWORD /d 1 /f }
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\OneDrive" /v DisableFileSyncNGSC /t REG_DWORD /d 1 /f }
     #     Prevent OneDrive from generating network traffic until the user signs in to OneDrive => Enabled
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\OneDrive\Prevent OneDrive from generating network traffic until the user signs in to OneDrive => Enabled
     reg add "HKLM\SOFTWARE\Microsoft\OneDrive" /v PreventNetworkTrafficPreUserSignIn /t REG_DWORD /d 1 /f
@@ -1293,6 +1319,14 @@ if ($editGroupPolicies) {
     #     Let Windows apps access motion => Disabled
     #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\App Privacy\Let Windows apps access motion => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v LetAppsAccessMotion /t REG_DWORD /d 2 /f }
+
+    #   Voice Activation
+    #     Let Windows apps activate with voice => Force Deny
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\App Privacy\Let Windows apps activate with voice => Force Deny
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v LetAppsActivateWithVoice /t REG_DWORD /d 2 /f }
+    #     Let Windows apps activate with voice while the system is locked => Force Deny
+    #       Group Policy > Computer Configuration\Administrative Templates\Windows Components\App Privacy\Let Windows apps activate with voice while the system is locked => Force Deny
+    if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\AppPrivacy" /v LetAppsActivateWithVoiceAboveLock /t REG_DWORD /d 2 /f }
 
     #   Software Protection Platform
     #     Turn off KMS Client Online AVS Validation => Enabled
@@ -1374,16 +1408,12 @@ if ($editGroupPolicies) {
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventMusicFileMetadataRetrieval /t REG_DWORD /d 1 /f }
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventRadioPresetsRetrieval /t REG_DWORD /d 1 /f }
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventCodecDownload /t REG_DWORD /d 1 /f }
-    
 
     #   Allow Message Service Cloud Sync => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\Messaging" /v AllowMessageSync /t REG_DWORD /d 0 /f }
 
     #   Allow Microsoft accounts to be optional => Enabled
     reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v MSAOptional /t REG_DWORD /d 1 /f
-
-    #   Allow Online Tips => Disabled
-    reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer" /v AllowOnlineTips /t REG_DWORD /d 0 /f
 
     #   Configure Automatic Updates => Notify for download and auto install
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU" /v AUOptions /t REG_DWORD /d 2 /f }
@@ -1432,11 +1462,6 @@ if ($editGroupPolicies) {
 
     #   Turn on Live Sticker => Disabled
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\InputMethod\Settings\CHS" /v EnableLiveSticker /t REG_DWORD /d 0 /f }
-
-    #   Let Windows apps activate with voice
-
-    #   Let Windows apps activate with voice while the system is locked
-    
 }
 
 # Services

@@ -1,6 +1,6 @@
 <#
 windows-10-enhance-privacy-and-control.ps1
-Version 20201229
+Version 20210105
 Written by Harry Wong (RedAndBlueEraser)
 #>
 
@@ -69,6 +69,7 @@ Param(
     [bool]$appsMailAndCalendar              = $false,
     [bool]$appsMaps                         = $false,
     [bool]$appsMessaging                    = $false,
+    [bool]$appsMicrosoftEdgeLegacy          = $false,
     [bool]$appsMicrosoftEdge                = $false,
     [bool]$appsMicrosoftSolitaireCollection = $aggressiveOptimization.isPresent,
     [bool]$appsMicrosoftStore               = $false,
@@ -166,10 +167,25 @@ Param(
     [bool]$windowsInsiderProgram = $aggressiveOptimization.isPresent,
     [bool]$ieDoNotTrack = $true,
     [bool]$ieSuggestedSites = $true,
-    [bool]$edgeNewTabs = $true,
-    [bool]$edgeDoNotTrack = $true,
-    [bool]$edgeCortana = $aggressiveOptimization.isPresent,
-    [bool]$edgeSearchSiteSuggestions = $aggressiveOptimization.isPresent,
+    [bool]$edgeLegacyNewTabs = $true,
+    [bool]$edgeLegacyDoNotTrack = $true,
+    [bool]$edgeLegacyCortana = $aggressiveOptimization.isPresent,
+    [bool]$edgeLegacySearchSiteSuggestions = $aggressiveOptimization.isPresent,
+    [bool]$edgeDefaultBrowser = $true,
+    [bool]$edgeSignIn = $aggressiveOptimization.isPresent,
+    [bool]$edgeTrackingPrevention = $aggressiveOptimization.isPresent,
+    [bool]$edgeDoNotTrack = $aggressiveOptimization.isPresent,
+    [bool]$edgeCheckPaymentMethodsSaved = $aggressiveOptimization.isPresent,
+    [bool]$edgeDiagnosticData = $true,
+    [bool]$edgePersonalization = $true,
+    [bool]$edgeResolveNavigationErrorsWebService = $true,
+    [bool]$edgeSuggestSimilarSites = $aggressiveOptimization.isPresent,
+    [bool]$edgePinterestSuggestions = $aggressiveOptimization.isPresent,
+    [bool]$edgeSearchSuggestions = $aggressiveOptimization.isPresent,
+    [bool]$edgeFeedbackButton = $true,
+    [bool]$edgeNewTabPageLayoutContent = $true,
+    [bool]$edgePreloadNewTabPage = $aggressiveOptimization.isPresent,
+    [bool]$edgeBackgroundApps = $aggressiveOptimization.isPresent,
     [bool]$explorerFileExtensions = $true,
     [bool]$explorerSystemFiles = $true,
     [bool]$explorerSyncProviderNotifications = $true
@@ -422,10 +438,15 @@ if ($appsMessaging) {
     $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.Messaging*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
     Get-AppxPackage *Microsoft.Messaging* | Remove-AppxPackage
 }
+#   Microsoft Edge Legacy => Uninstall
+if ($appsMicrosoftEdgeLegacy) {
+    $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.MicrosoftEdge" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
+    Get-AppxPackage *Microsoft.MicrosoftEdge | Remove-AppxPackage
+}
 #   Microsoft Edge => Uninstall
 if ($appsMicrosoftEdge) {
-    $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.MicrosoftEdge*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
-    Get-AppxPackage *Microsoft.MicrosoftEdge* | Remove-AppxPackage
+    $appxProvisionedPackage | Where-Object { $_.PackageName -Like "*Microsoft.MicrosoftEdge.Stable*" } | ForEach-Object { Remove-AppxProvisionedPackage -Online -PackageName $_.PackageName }
+    Get-AppxPackage *Microsoft.MicrosoftEdge.Stable* | Remove-AppxPackage
 }
 #   Microsoft Solitaire Collection => Uninstall
 if ($appsMicrosoftSolitaireCollection) {
@@ -1158,31 +1179,29 @@ if ($ieSuggestedSites) {
     }
 }
 
-# Microsoft Edge > Settings > Open new tabs with => Top sites
-if ($edgeNewTabs) {
+# Microsoft Edge Legacy > Settings > Open new tabs with => Top sites
+if ($edgeLegacyNewTabs) {
     reg add "HKCR\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI" /v NewTabPageDisplayOption /t REG_DWORD /d 1 /f
 }
 
-# Microsoft Edge > Settings > View advanced settings > Send Do Not Track requests => On
-if ($edgeDoNotTrack) {
+# Microsoft Edge Legacy > Settings > View advanced settings > Send Do Not Track requests => On
+if ($edgeLegacyDoNotTrack) {
     reg add "HKCR\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
     # Group Policy > User Configuration\Administrative Templates\Windows Components\Microsoft Edge\Configure Do Not Track => Enabled
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Microsoft Edge\Configure Do Not Track => Enabled
     if ($editGroupPolicies) {
         reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
-        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
-        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
     }
 }
 
-# Microsoft Edge > Settings > View advanced settings > Have Cortana assist me... => Off
-if ($edgeCortana) {
+# Microsoft Edge Legacy > Settings > View advanced settings > Have Cortana assist me... => Off
+if ($edgeLegacyCortana) {
     reg add "HKCR\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\ServiceUI" /v EnableCortana /t REG_DWORD /d 0 /f
 }
 
-# Microsoft Edge > Settings > View advanced settings > Show search and site suggestions... => Off
-if ($edgeSearchSiteSuggestions) {
+# Microsoft Edge Legacy > Settings > View advanced settings > Show search and site suggestions... => Off
+if ($edgeLegacySearchSiteSuggestions) {
     reg add "HKCR\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\Main" /v ShowSearchSuggestionsGlobal /t REG_DWORD /d 0 /f
     # Group Policy > User Configuration\Administrative Templates\Windows Components\Microsoft Edge\Configure search suggestions in Address bar => Disabled
     # Group Policy > Computer Configuration\Administrative Templates\Windows Components\Microsoft Edge\Configure search suggestions in Address bar => Disabled
@@ -1190,6 +1209,152 @@ if ($edgeSearchSiteSuggestions) {
         reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\SearchScopes" /v ShowSearchSuggestionsGlobal /t REG_DWORD /d 0 /f
         reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\SearchScopes" /v ShowSearchSuggestionsGlobal /t REG_DWORD /d 0 /f
     }
+}
+
+# Microsoft Edge > Would you like to set Microsoft Edge as your default browser? Set as default => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Set Microsoft Edge as default browser => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Set Microsoft Edge as default browser => Disabled
+if ($edgeDefaultBrowser -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v DefaultBrowserSettingEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v DefaultBrowserSettingEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Profiles > Sign in => Disabled
+# Microsoft Edge > Profile > Sign in => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Browser sign-in settings => Disable
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Browser sign-in settings => Disable
+if ($edgeSignIn -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v BrowserSignin /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v BrowserSignin /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Tracking prevention => Strict
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Block tracking of users' web-browsing activity => Strict
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Block tracking of users' web-browsing activity => Strict
+if ($edgeTrackingPrevention -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v TrackingPrevention /t REG_DWORD /d 3 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v TrackingPrevention /t REG_DWORD /d 3 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Send "Do Not Track" requests => On
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure Do Not Track => Enabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure Do Not Track => Enabled
+# Note: For unknown reasons, this policy disables the  Microsoft Edge > Settings > Privacy, search, and services > Use secure DNS  option.
+if ($edgeDoNotTrack -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureDoNotTrack /t REG_DWORD /d 1 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Allow sites to check if you have payment methods saved => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Allow websites to query for available payment methods => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Allow websites to query for available payment methods => Disabled
+if ($edgeCheckPaymentMethodsSaved -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v PaymentMethodQueryEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v PaymentMethodQueryEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Microsoft collects required diagnostic data... => Off
+# Microsoft Edge > Settings > Privacy, search, and services > Help improve Microsoft products by sending optional diagnostic data... => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Send required and optional diagnostic data about browser usage => Off
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Send required and optional diagnostic data about browser usage => Off
+if ($edgeDiagnosticData -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v DiagnosticData /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v DiagnosticData /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Improve your web experience by allowing Microsoft to use your browsing history... => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Allow personalization of ads, search and news by sending browsing history to Microsoft => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Allow personalization of ads, search and news by sending browsing history to Microsoft => Disabled
+if ($edgePersonalization -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v PersonalizationReportingEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v PersonalizationReportingEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Use a web service to help resolve navigation errors => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable resolution of navigation errors using a web service => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable resolution of navigation errors using a web service => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable resolution of navigation errors using a web service => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable resolution of navigation errors using a web service => Disabled
+if ($edgeResolveNavigationErrorsWebService -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ResolveNavigationErrorsUseWebService /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v ResolveNavigationErrorsUseWebService /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ResolveNavigationErrorsUseWebService /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v ResolveNavigationErrorsUseWebService /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Suggest similar sites when a website can't be found => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Suggest similar pages when a webpage can't be found => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Suggest similar pages when a webpage can't be found => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Suggest similar pages when a webpage can't be found => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Suggest similar pages when a webpage can't be found => Disabled
+if ($edgeSuggestSimilarSites -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v AlternateErrorPagesEnabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v AlternateErrorPagesEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v AlternateErrorPagesEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v AlternateErrorPagesEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Show suggestions from Pinterest in Collections => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Block access to a specified list of services and export targets in Collections => pinterest_suggestions
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Block access to a specified list of services and export targets in Collections => pinterest_suggestions
+if ($edgePinterestSuggestions -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 1 /t REG_SZ /d pinterest_suggestions /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 1 /t REG_SZ /d pinterest_suggestions /f
+}
+
+# Microsoft Edge > Settings > Privacy, search, and services > Address bar and search > Show me search and site suggestions using my typed characters => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable search suggestions => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable search suggestions => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable search suggestions => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable search suggestions => Disabled
+if ($edgeSearchSuggestions -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SearchSuggestEnabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v SearchSuggestEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SearchSuggestEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v SearchSuggestEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > Appearance > Show feedback button => Off
+# Microsoft Edge > Help and feedback > Send feedback => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Allow user feedback => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Allow user feedback => Disabled
+if ($edgeFeedbackButton -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v UserFeedbackAllowed /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v UserFeedbackAllowed /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > New tab > Page Settings > Page layout Custom > Content => Content off
+# Microsoft Edge > New tab > Page Settings > Advanced > New tab tips => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Content settings\Choose whether users can receive customized background images and text, suggestions, notifications, and tips for Microsoft services => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Content settings\Choose whether users can receive customized background images and text, suggestions, notifications, and tips for Microsoft services => Disabled
+# Note: Doesn't work.
+if ($edgeNewTabPageLayoutContent -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SpotlightExperiencesAndRecommendationsEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SpotlightExperiencesAndRecommendationsEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > New tab page > Preload the new tab page for a faster experience => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Startup, home page and new tab page\Enable preload of the new tab page for faster rendering => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Startup, home page and new tab page\Enable preload of the new tab page for faster rendering => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Startup, home page and new tab page\Enable preload of the new tab page for faster rendering => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Startup, home page and new tab page\Enable preload of the new tab page for faster rendering => Disabled
+if ($edgePreloadNewTabPage -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v NewTabPagePrerenderEnabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v NewTabPagePrerenderEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v NewTabPagePrerenderEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v NewTabPagePrerenderEnabled /t REG_DWORD /d 0 /f
+}
+
+# Microsoft Edge > Settings > System > Continue running background apps when Microsoft Edge is closed => Off
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Continue running background apps after Microsoft Edge closes => Disabled
+# Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Continue running background apps after Microsoft Edge closes => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Continue running background apps after Microsoft Edge closes => Disabled
+# Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Continue running background apps after Microsoft Edge closes => Disabled
+if ($edgeBackgroundApps -and $editGroupPolicies) {
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v BackgroundModeEnabled /t REG_DWORD /d 0 /f
 }
 
 # File Explorer > Folder Options > View > Hide extensions for known file types => Off
@@ -1386,7 +1551,7 @@ if ($editGroupPolicies) {
     reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableThirdPartySuggestions /t REG_DWORD /d 1 /f
     reg add "HKCU\SOFTWARE\Policies\Microsoft\Windows\CloudContent" /v DisableWindowsSpotlightOnActionCenter /t REG_DWORD /d 1 /f
 
-    #   Microsoft Edge related
+    #   Microsoft Edge Legacy related
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AlwaysEnableBooksLibrary /t REG_DWORD /d 0 /f }
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AlwaysEnableBooksLibrary /t REG_DWORD /d 0 /f }
     reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\BooksLibrary" /v EnableExtendedBooksTelemetry /t REG_DWORD /d 0 /f
@@ -1401,6 +1566,209 @@ if ($editGroupPolicies) {
     #    Allow Microsoft Edge to pre-launch at Windows startup, when the system is idle, and each time Microsoft Edge is closed => Prevent pre-launching
     if ($aggressiveOptimization.isPresent) { reg add "HKCU\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AllowPrelaunch /t REG_DWORD /d 0 /f }
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\MicrosoftEdge\Main" /v AllowPrelaunch /t REG_DWORD /d 0 /f }
+
+    #   Microsoft Edge related
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Cast\Enable Google Cast => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Cast\Enable Google Cast => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v EnableMediaRouter /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v EnableMediaRouter /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Cast\Show the cast icon in the toolbar => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Cast\Show the cast icon in the toolbar => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ShowCastIconInToolbar /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ShowCastIconInToolbar /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Performance\Enable startup boost => Disabled
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Performance\Enable startup boost => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Performance\Enable startup boost => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Performance\Enable startup boost => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v StartupBoostEnabled /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Startup, home page and new tab page\Hide the default top sites from the new tab page => Enabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Startup, home page and new tab page\Hide the default top sites from the new tab page => Enabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v NewTabPageHideDefaultTopSites /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v NewTabPageHideDefaultTopSites /t REG_DWORD /d 1 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable Microsoft Search in Bing suggestions in the address bar => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable Microsoft Search in Bing suggestions in the address bar => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v AddressBarMicrosoftSearchInBingProviderEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v AddressBarMicrosoftSearchInBingProviderEnabled /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Ads setting for sites with intrusive ads => BlockAds
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Ads setting for sites with intrusive ads => BlockAds
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v AdsSettingForIntrusiveAdsSites /t REG_DWORD /d 2 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v AdsSettingForIntrusiveAdsSites /t REG_DWORD /d 2 /f
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enables background updates to the list of available templates for Collections and other features that use templates => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enables background updates to the list of available templates for Collections and other features that use templates => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v BackgroundTemplateListUpdatesEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v BackgroundTemplateListUpdatesEnabled /t REG_DWORD /d 0 /f
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Block all ads on Bing search results => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Block all ads on Bing search results => Disabled
+    #    Note: SafeSearch setting will be set to 'Strict' and can't be changed by the user.
+    if ($false) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v BingAdsSuppression /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v BingAdsSuppression /t REG_DWORD /d 1 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Use built-in DNS client => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Use built-in DNS client => Disabled
+    #    Note: This policy disables the  Microsoft Edge > Settings > Privacy, search, and services > Use secure DNS  option.
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v BuiltInDnsClientEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v BuiltInDnsClientEnabled /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Block access to a specified list of services and export targets in Collections => pinterest_suggestions, collections_share
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Block access to a specified list of services and export targets in Collections => pinterest_suggestions, collections_share
+    #    Note: Doesn't work.
+    if ($false) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 1 /t REG_SZ /d pinterest_suggestions /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 2 /t REG_SZ /d collections_share /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 1 /t REG_SZ /d pinterest_suggestions /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\CollectionsServicesAndExportsBlockList" /v 2 /t REG_SZ /d collections_share /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure Online Text To Speech => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure Online Text To Speech => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureOnlineTextToSpeech /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureOnlineTextToSpeech /t REG_DWORD /d 0 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure the Share experience => ShareDisallowed
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure the Share experience => ShareDisallowed
+    if ($false) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureShare /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ConfigureShare /t REG_DWORD /d 1 /f
+    }
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Shopping in Microsoft Edge Enabled => Disabled
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Shopping in Microsoft Edge Enabled => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Shopping in Microsoft Edge Enabled => Disabled
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Shopping in Microsoft Edge Enabled => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v EdgeShoppingAssistantEnabled /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v EdgeShoppingAssistantEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v EdgeShoppingAssistantEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v EdgeShoppingAssistantEnabled /t REG_DWORD /d 0 /f
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Control communication with the Experimentation and Configuration Service => ConfigurationsOnlyMode
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Control communication with the Experimentation and Configuration Service => ConfigurationsOnlyMode
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ExperimentationAndConfigurationServiceControl /t REG_DWORD /d 1 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ExperimentationAndConfigurationServiceControl /t REG_DWORD /d 1 /f
+    #    Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Control communication with the Experimentation and Configuration Service => RestrictedMode
+    #    Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Control communication with the Experimentation and Configuration Service => RestrictedMode
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ExperimentationAndConfigurationServiceControl /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ExperimentationAndConfigurationServiceControl /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Force synchronization of browser data and do not show the sync consent prompt => Do not automatically start sync and show the sync consent
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Force synchronization of browser data and do not show the sync consent prompt => Do not automatically start sync and show the sync consent
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ForceSync /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ForceSync /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Allow suggestions from local providers => Disabled
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Allow suggestions from local providers => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Allow suggestions from local providers => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Allow suggestions from local providers => Disabled
+    if ($false) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v LocalProvidersEnabled /t REG_DWORD /d 0 /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v LocalProvidersEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v LocalProvidersEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v LocalProvidersEnabled /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Allow Google Cast to connect to Cast devices on all IP addresses => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Allow Google Cast to connect to Cast devices on all IP addresses => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v MediaRouterCastAllowAllIPs /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v MediaRouterCastAllowAllIPs /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable usage and crash-related data reporting => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable usage and crash-related data reporting => Disabled    
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v MetricsReportingEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v MetricsReportingEnabled /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure whether a user always has a default profile automatically signed in with their work or school account => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure whether a user always has a default profile automatically signed in with their work or school account => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v NonRemovableProfileEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v NonRemovableProfileEnabled /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable Proactive Authentication => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable Proactive Authentication => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ProactiveAuthEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ProactiveAuthEnabled /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable full-tab promotional content => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable full-tab promotional content => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v PromotionalTabsEnabled /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v PromotionalTabsEnabled /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Send site information to improve Microsoft services => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Send site information to improve Microsoft services => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SendSiteInfoToImproveServices /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SendSiteInfoToImproveServices /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Show Microsoft Rewards experiences => Disabled
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Show Microsoft Rewards experiences => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Show Microsoft Rewards experiences => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Show Microsoft Rewards experiences => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ShowMicrosoftRewards /t REG_DWORD /d 0 /f
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v ShowMicrosoftRewards /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ShowMicrosoftRewards /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v ShowMicrosoftRewards /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Show Microsoft Office shortcut in favorites bar => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Show Microsoft Office shortcut in favorites bar => Disabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v ShowOfficeShortcutInFavoritesBar /t REG_DWORD /d 0 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v ShowOfficeShortcutInFavoritesBar /t REG_DWORD /d 0 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure Speech Recognition => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure Speech Recognition => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SpeechRecognitionEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SpeechRecognitionEnabled /t REG_DWORD /d 0 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Suppress the unsupported OS warning => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Suppress the unsupported OS warning => Enabled
+    reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SuppressUnsupportedOSWarning /t REG_DWORD /d 1 /f
+    reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SuppressUnsupportedOSWarning /t REG_DWORD /d 1 /f
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Disable synchronization of data using Microsoft sync services => Enabled
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Disable synchronization of data using Microsoft sync services => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Disable synchronization of data using Microsoft sync services => Enabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Disable synchronization of data using Microsoft sync services => Enabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v SyncDisabled /t REG_DWORD /d 1 /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v SyncDisabled /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v SyncDisabled /t REG_DWORD /d 1 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v SyncDisabled /t REG_DWORD /d 1 /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Configure the list of types that are excluded from synchronization => favorites, settings, passwords, addressesAndMore, extensions, history, openTabs, collections
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Configure the list of types that are excluded from synchronization => favorites, settings, passwords, addressesAndMore, extensions, history, openTabs, collections
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 1 /t REG_SZ /d favorites /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 2 /t REG_SZ /d settings /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 3 /t REG_SZ /d passwords /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 4 /t REG_SZ /d addressesAndMore /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 5 /t REG_SZ /d extensions /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 6 /t REG_SZ /d history /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 7 /t REG_SZ /d openTabs /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 8 /t REG_SZ /d collections /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 1 /t REG_SZ /d favorites /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 2 /t REG_SZ /d settings /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 3 /t REG_SZ /d passwords /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 4 /t REG_SZ /d addressesAndMore /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 5 /t REG_SZ /d extensions /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 6 /t REG_SZ /d history /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 7 /t REG_SZ /d openTabs /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\SyncTypesListDisabled" /v 8 /t REG_SZ /d collections /f
+    }
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge\Enable Translate => Disabled
+    # Group Policy > User Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable Translate => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge\Enable Translate => Disabled
+    # Group Policy > Computer Configuration\Administrative Templates\Microsoft Edge - Default Settings (users can override)\Enable Translate => Disabled
+    if ($aggressiveOptimization.isPresent) {
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge" /v TranslateEnabled /t REG_DWORD /d 0 /f
+        reg add "HKCU\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v TranslateEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge" /v TranslateEnabled /t REG_DWORD /d 0 /f
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Edge\Recommended" /v TranslateEnabled /t REG_DWORD /d 0 /f
+    }
 
     #   Windows Media Player related
     if ($aggressiveOptimization.isPresent) { reg add "HKLM\SOFTWARE\Policies\Microsoft\WindowsMediaPlayer" /v PreventLibrarySharing /t REG_DWORD /d 1 /f }

@@ -37,4 +37,4 @@ windows-10-enhance-privacy-and-control.ps1 -AggressiveOptimization -EditGroupPol
 ```
 
 ## Author
-Harry Wong (RedAndBlueEraser)
+RedAndBlueEraser

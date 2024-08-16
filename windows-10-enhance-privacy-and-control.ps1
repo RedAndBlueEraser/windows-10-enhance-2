@@ -1850,8 +1850,6 @@ if ($aggressiveOptimization.isPresent) {
 #   Connected User Experiences and Telemetry => Disabled
 sc.exe stop DiagTrack
 sc.exe config DiagTrack start= disabled
-sc.exe stop dmwappushservice
-sc.exe config dmwappushservice start= disabled
 sc.exe stop diagnosticshub.standardcollector.service
 sc.exe config diagnosticshub.standardcollector.service start= disabled
 
